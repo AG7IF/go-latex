@@ -5,43 +5,45 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/ag7if/go-files"
 	"github.com/pkg/errors"
-
-	"github.com/ut080/bcs-portal/internal/config"
-	"github.com/ut080/bcs-portal/internal/files"
-	"github.com/ut080/bcs-portal/internal/logging"
+	"github.com/rs/zerolog"
 )
 
-type LaTeX interface {
+type LaTeXer interface {
 	LaTeX() string
 }
 
-func GenerateLaTeX(latex LaTeX, outputFile files.File, assets []string, logger logging.Logger) error {
-	cfgDir, err := config.ConfigDir()
-	if err != nil {
-		return errors.WithStack(err)
-	}
+type Compiler struct {
+	assetDir string
+	buildDir string
+	logger   *zerolog.Logger
+}
 
-	cacheDir, err := config.CacheDir()
-	if err != nil {
-		return errors.WithStack(err)
+func NewCompiler(assetDir, buildDir string, logger *zerolog.Logger) Compiler {
+	return Compiler{
+		assetDir: assetDir,
+		buildDir: buildDir,
+		logger:   logger,
 	}
+}
 
+func (lc Compiler) GenerateLaTeX(latex LaTeXer, outputFile files.File, assets []string) error {
 	for _, asset := range assets {
-		assetFile, err := files.NewFile(filepath.Join(cfgDir, "assets", asset), logger)
+		assetFile, err := files.NewFile(filepath.Join(lc.assetDir, asset), lc.logger)
 		if err != nil {
-			logger.Warn().Err(err).Str("file", asset).Msg("failed to acquire reference to asset")
+			lc.logger.Warn().Err(err).Str("file", asset).Msg("failed to acquire reference to asset")
 		}
 
-		_, err = assetFile.Copy(filepath.Join(cacheDir, "build", asset))
+		_, err = assetFile.Copy(filepath.Join(lc.buildDir, asset))
 		if err != nil {
 			// TODO: React to whether this build asset has already been copied
-			logger.Warn().Err(err).Str("file", asset).Msg("failed to copy build asset")
+			lc.logger.Warn().Err(err).Str("file", asset).Msg("failed to copy build asset")
 		}
 	}
 
 	texSourceFileName := fmt.Sprintf("%s.tex", outputFile.Base())
-	texSource, err := files.NewFile(filepath.Join(cacheDir, "build", texSourceFileName), logger)
+	texSource, err := files.NewFile(filepath.Join(lc.buildDir, texSourceFileName), lc.logger)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -53,13 +55,8 @@ func GenerateLaTeX(latex LaTeX, outputFile files.File, assets []string, logger l
 	return nil
 }
 
-func CompileLaTeX(outputFile files.File, logger logging.Logger) error {
-	cacheDir, err := config.CacheDir()
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	texSourceFile, err := files.NewFile(filepath.Join(cacheDir, "build", fmt.Sprintf("%s.tex", outputFile.Base())), logger)
+func (lc Compiler) CompileLaTeX(outputFile files.File) error {
+	texSourceFile, err := files.NewFile(filepath.Join(lc.buildDir, fmt.Sprintf("%s.tex", outputFile.Base())), lc.logger)
 
 	// First run
 	cmd := exec.Command("pdflatex", "-halt-on-error", texSourceFile.Name())
@@ -74,7 +71,7 @@ func CompileLaTeX(outputFile files.File, logger logging.Logger) error {
 	cmd = exec.Command("pdflatex", "-halt-on-error", texSourceFile.Name())
 	cmd.Dir = texSourceFile.Dir()
 
-	cachedBuildfile, err := files.NewFile(filepath.Join(cacheDir, "build", fmt.Sprintf("%s.pdf", outputFile.Base())), logger)
+	cachedBuildfile, err := files.NewFile(filepath.Join(lc.buildDir, fmt.Sprintf("%s.pdf", outputFile.Base())), lc.logger)
 	if err != nil {
 		return errors.WithStack(err)
 	}
