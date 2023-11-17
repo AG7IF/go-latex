@@ -35,7 +35,7 @@ func (lc Compiler) GenerateLaTeX(latex LaTeXer, outputFile files.File, assets []
 			lc.logger.Warn().Err(err).Str("file", asset).Msg("failed to acquire reference to asset")
 		}
 
-		_, err = assetFile.Copy(filepath.Join(lc.buildDir, asset))
+		_, err = assetFile.Copy(lc.buildDir)
 		if err != nil {
 			// TODO: React to whether this build asset has already been copied
 			lc.logger.Warn().Err(err).Str("file", asset).Msg("failed to copy build asset")
