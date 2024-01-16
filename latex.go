@@ -59,7 +59,7 @@ func (lc Compiler) CompileLaTeX(outputFile files.File) error {
 	texSourceFile, err := files.NewFile(filepath.Join(lc.buildDir, fmt.Sprintf("%s.tex", outputFile.Base())), lc.logger)
 
 	// First run
-	cmd := exec.Command("pdflatex", "-halt-on-error", texSourceFile.Name())
+	cmd := exec.Command("xelatex", "-halt-on-error", texSourceFile.Name())
 	cmd.Dir = texSourceFile.Dir()
 
 	err = cmd.Run()
