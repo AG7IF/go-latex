@@ -4,11 +4,11 @@ type LaTeXer interface {
 	LaTeX() string
 }
 
-type Command interface {
+type Commander interface {
 	LaTeXCmd(args ...string) string
 }
 
-type CustomCommand interface {
-	Command
+type CustomCommander interface {
+	Commander
 	Define() string
 }
