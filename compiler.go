@@ -3,32 +3,30 @@ package latex
 import (
 	"fmt"
 	"os/exec"
-	"path/filepath"
 
 	"github.com/ag7if/go-files"
 	"github.com/pkg/errors"
 )
 
 type Compiler struct {
-	assetDir string
-	buildDir string
+	buildCommand BuildCommand
+	bibCommand   BibCommand
+	buildDir     files.Directory
+	assetDir     files.Directory
 }
 
-func NewCompiler(assetDir, buildDir string) Compiler {
+func NewCompiler(buildCmd BuildCommand, bibCmd BibCommand, buildDir files.Directory, assetDir files.Directory) Compiler {
 	return Compiler{
-		assetDir: assetDir,
-		buildDir: buildDir,
+		buildCommand: buildCmd,
+		bibCommand:   bibCmd,
+		buildDir:     buildDir,
+		assetDir:     assetDir,
 	}
 }
 
-func (lc Compiler) GenerateLaTeX(latex LaTeXer, outputFile files.File, assets []string) error {
+func (lc Compiler) GenerateLaTeX(latex LaTeXer, outputFile files.File, assets []files.File) error {
 	for _, asset := range assets {
-		assetFile, err := files.NewFile(filepath.Join(lc.assetDir, asset))
-		if err != nil {
-			return errors.WithMessagef(err, "failed to acquire reference to asset: %s", asset)
-		}
-
-		_, err = assetFile.Copy(lc.buildDir)
+		_, err := lc.buildDir.CopyFileToDir(asset)
 		if err != nil {
 			// TODO: React to whether this build asset has already been copied
 			return errors.WithMessagef(err, "failed to copy build asset: %s", asset)
@@ -36,7 +34,7 @@ func (lc Compiler) GenerateLaTeX(latex LaTeXer, outputFile files.File, assets []
 	}
 
 	texSourceFileName := fmt.Sprintf("%s.tex", outputFile.Base())
-	texSource, err := files.NewFile(filepath.Join(lc.buildDir, texSourceFileName))
+	texSource, err := lc.buildDir.NewFile(texSourceFileName)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -49,29 +47,50 @@ func (lc Compiler) GenerateLaTeX(latex LaTeXer, outputFile files.File, assets []
 }
 
 func (lc Compiler) CompileLaTeX(outputFile files.File) error {
-	texSourceFile, err := files.NewFile(filepath.Join(lc.buildDir, fmt.Sprintf("%s.tex", outputFile.Base())))
+	texSourceFile, err := lc.buildDir.NewFile(fmt.Sprintf("%s.tex", outputFile.Base))
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	// First run
-	cmd := exec.Command("xelatex", "-halt-on-error", texSourceFile.Name())
-	cmd.Dir = texSourceFile.Dir().Path()
-
+	cmd := exec.Command(lc.buildCommand.String(), "-halt-on-error", texSourceFile.Name())
+	cmd.Dir = lc.buildDir.Path()
 	err = cmd.Run()
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	// Second run (pdflatex usually needs two runs to get formatting right)
-	cmd = exec.Command("pdflatex", "-halt-on-error", texSourceFile.Name())
-	cmd.Dir = texSourceFile.Dir().Path()
+	// Build Bibliography
+	if lc.bibCommand != NoBib {
+		cmd := exec.Command(lc.bibCommand.String(), texSourceFile.Base())
+		cmd.Dir = lc.buildDir.Path()
+		err = cmd.Run()
+		if err != nil {
+			return errors.WithStack(err)
+		}
+	}
 
-	cachedBuildfile, err := files.NewFile(filepath.Join(lc.buildDir, fmt.Sprintf("%s.pdf", outputFile.Base())))
+	// Second run
+	cmd = exec.Command(lc.buildCommand.String(), "-halt-on-error", texSourceFile.Name())
+	cmd.Dir = lc.buildDir.Path()
+	err = cmd.Run()
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	_, err = cachedBuildfile.Move(outputFile.Dir().Path())
+
+	// Third run
+	cmd = exec.Command(lc.buildCommand.String(), "-halt-on-error", texSourceFile.Name())
+	cmd.Dir = lc.buildDir.Path()
+	err = cmd.Run()
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	cachedBuildfile, err := lc.buildDir.NewFile(fmt.Sprintf("%s.pdf", outputFile.Base()))
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	_, err = outputFile.Dir().MoveFileToDir(cachedBuildfile)
 	if err != nil {
 		return errors.WithStack(err)
 	}
