@@ -12,15 +12,13 @@ type Compiler struct {
 	buildCommand BuildCommand
 	bibCommand   BibCommand
 	buildDir     files.Directory
-	assetDir     files.Directory
 }
 
-func NewCompiler(buildCmd BuildCommand, bibCmd BibCommand, buildDir files.Directory, assetDir files.Directory) Compiler {
+func NewCompiler(buildCmd BuildCommand, bibCmd BibCommand, buildDir files.Directory) Compiler {
 	return Compiler{
 		buildCommand: buildCmd,
 		bibCommand:   bibCmd,
 		buildDir:     buildDir,
-		assetDir:     assetDir,
 	}
 }
 
@@ -47,7 +45,7 @@ func (lc Compiler) GenerateLaTeX(latex LaTeXer, outputFile files.File, assets []
 }
 
 func (lc Compiler) CompileLaTeX(outputFile files.File) error {
-	texSourceFile, err := lc.buildDir.NewFile(fmt.Sprintf("%s.tex", outputFile.Base))
+	texSourceFile, err := lc.buildDir.NewFile(fmt.Sprintf("%s.tex", outputFile.Base()))
 	if err != nil {
 		return errors.WithStack(err)
 	}

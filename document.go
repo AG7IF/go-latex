@@ -17,13 +17,14 @@ type Document interface {
 	AddInclude(packageName, options string)
 	AddStyle(style Style)
 	AssetDir() string
-	Assets() []string
-	BuildDir() string
+	Assets() []files.File
+	BuildDir() files.Directory
 	SetClass(className, options string)
 }
 
+// BuildDocument is an incomplete document construction system. I don't recommend using it.
 func BuildDocument(document Document, outputFile files.File) error {
-	c := NewCompiler(document.AssetDir(), document.BuildDir())
+	c := NewCompiler(XeLaTeX, Biber, document.BuildDir())
 
 	err := c.GenerateLaTeX(document, outputFile, document.Assets())
 	if err != nil {
