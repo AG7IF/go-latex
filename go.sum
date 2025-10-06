@@ -1,4 +1,4 @@
-github.com/ag7if/go-files v0.4.1 h1:Wr2vHq/F2oKIP6ar+tGiojrW1kQft66GizySfMV2bak=
-github.com/ag7if/go-files v0.4.1/go.mod h1:AVnt2Fud3DO3w22grDSczDmWDVBmoobgAleaWsd/oms=
+github.com/ag7if/go-files v0.7.0 h1:1q/KLFloGbeiXzsnnMZQrKPus8LLUNyCUv5kY4SZ518=
+github.com/ag7if/go-files v0.7.0/go.mod h1:AVnt2Fud3DO3w22grDSczDmWDVBmoobgAleaWsd/oms=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=

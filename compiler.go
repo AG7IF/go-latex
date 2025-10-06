@@ -56,7 +56,7 @@ func (lc Compiler) CompileLaTeX(outputFile files.File) error {
 
 	// First run
 	cmd := exec.Command("xelatex", "-halt-on-error", texSourceFile.Name())
-	cmd.Dir = texSourceFile.Dir()
+	cmd.Dir = texSourceFile.Dir().Path()
 
 	err = cmd.Run()
 	if err != nil {
@@ -65,13 +65,13 @@ func (lc Compiler) CompileLaTeX(outputFile files.File) error {
 
 	// Second run (pdflatex usually needs two runs to get formatting right)
 	cmd = exec.Command("pdflatex", "-halt-on-error", texSourceFile.Name())
-	cmd.Dir = texSourceFile.Dir()
+	cmd.Dir = texSourceFile.Dir().Path()
 
 	cachedBuildfile, err := files.NewFile(filepath.Join(lc.buildDir, fmt.Sprintf("%s.pdf", outputFile.Base())))
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	_, err = cachedBuildfile.Move(outputFile.Dir())
+	_, err = cachedBuildfile.Move(outputFile.Dir().Path())
 	if err != nil {
 		return errors.WithStack(err)
 	}
