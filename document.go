@@ -5,12 +5,14 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Style is experimental and incomplete. You probably shouldn't use it.
 type Style interface {
 	AddCommand(command Command, args ...string)
 	AddDef(command CustomCommand)
 	StyleDef() string
 }
 
+// Document is experimental and incomplete. You probably shouldn't use it.
 type Document interface {
 	LaTeXer
 	AddAsset(asset string)
