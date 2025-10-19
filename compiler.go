@@ -36,7 +36,7 @@ func (lc Compiler) GenerateLaTeX(latex LaTeXer, outputFile files.File, assets []
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	err = texSource.WriteString(latex.LaTeX())
+	err = texSource.WriteBytes(latex.LaTeX())
 	if err != nil {
 		return errors.WithStack(err)
 	}
