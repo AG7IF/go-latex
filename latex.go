@@ -14,7 +14,7 @@ func (ls LaTeXString) LaTeX() []byte {
 
 // A BibTeXer can generate an entire BibTex file.
 type BibTeXer interface {
-	BibTex() []byte
+	BibTeX() []byte
 }
 
 // A LaTeXRenderer can be rendered as a LaTeX fragment, but not an entire document.
@@ -24,5 +24,5 @@ type LaTeXRenderer interface {
 
 // A BibTexRenderer can be rendered as a BibTex fragment (e.g. a single bib resource), but not an entire .bib file.
 type BibTeXRenderer interface {
-	RenderBibTex() []byte
+	RenderBibTeX() []byte
 }
